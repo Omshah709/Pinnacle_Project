@@ -1,3 +1,5 @@
+
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class TicTacToe {
@@ -12,24 +14,34 @@ public class TicTacToe {
         while (!gameEnded) {
             printBoard();
             System.out.println("Player " + currentPlayer + ", enter row and column (1-3):");
-            int row = sc.nextInt() - 1;
-            int col = sc.nextInt() - 1;
 
-            if (isValidMove(row, col)) {
-                board[row][col] = currentPlayer;
-                if (hasWon(currentPlayer)) {
-                    printBoard();
-                    System.out.println("Player " + currentPlayer + " wins!");
-                    gameEnded = true;
-                } else if (isBoardFull()) {
-                    printBoard();
-                    System.out.println("It's a draw!");
-                    gameEnded = true;
+            int row = -1, col = -1;
+
+            try {
+                row = sc.nextInt() - 1;
+                col = sc.nextInt() - 1;
+
+                if (isValidMove(row, col)) {
+                    board[row][col] = currentPlayer;
+                    if (hasWon(currentPlayer)) {
+                        printBoard();
+                        System.out.println("Player " + currentPlayer + " wins!");
+                        gameEnded = true;
+                    } else if (isBoardFull()) {
+                        printBoard();
+                        System.out.println("It's a draw!");
+                        gameEnded = true;
+                    } else {
+                        currentPlayer = (currentPlayer == 'X') ? 'O' : 'X';
+                    }
                 } else {
-                    currentPlayer = (currentPlayer == 'X') ? 'O' : 'X';
+                    System.out.println("Invalid move. Try again.");
                 }
-            } else {
-                System.out.println("Invalid move. Try again.");
+            } catch (InputMismatchException e) {
+                System.out.println("❌ Invalid input! Please enter numbers between 1 and 3.");
+                sc.nextLine(); // clear invalid input
+            } catch (ArrayIndexOutOfBoundsException e) {
+                System.out.println("❌ Out of range! Please enter values between 1 and 3.");
             }
         }
     }
