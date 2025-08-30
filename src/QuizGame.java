@@ -1,4 +1,5 @@
 import java.util.*;
+import java.util.concurrent.*;
 
 public class QuizGame {
     static class Question {
@@ -15,37 +16,70 @@ public class QuizGame {
 
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter your name: ");
+        String name = sc.nextLine();
+        System.out.println("\n===== Welcome, " + name + ", to the Quiz Game! =====\n");
+
         List<Question> questions = getQuestions();
         int score = 0;
 
-        System.out.println("\n===== Welcome to the Java Quiz Game =====\n");
-        System.out.print("Enter your name: ");
-        String name = sc.nextLine();
+        ExecutorService executor = Executors.newSingleThreadExecutor();
 
         for (int i = 0; i < questions.size(); i++) {
             Question q = questions.get(i);
-            System.out.println("\nQ" + (i + 1) + ": " + q.question);
+
+            System.out.println("Q" + (i + 1) + ". " + q.question);
             for (int j = 0; j < q.options.length; j++) {
                 System.out.println((j + 1) + ". " + q.options[j]);
             }
-            System.out.print("Your answer (1-4): ");
-            int ans = sc.nextInt();
 
-            if (ans == q.correctAnswer) {
-                System.out.println("✅ Correct!");
-                score++;
-            } else {
-                System.out.println("❌ Wrong! Correct answer: " + q.options[q.correctAnswer - 1]);
+            long startTime = System.currentTimeMillis();
+            boolean answered = false;
+
+            while (!answered && (System.currentTimeMillis() - startTime) < 10000) { // 10s window
+                long remainingTime = 10000 - (System.currentTimeMillis() - startTime);
+                System.out.print("Your answer (1-" + q.options.length + ") [" + (remainingTime / 1000) + "s left]: ");
+
+                Future<String> future = executor.submit(() -> sc.nextLine());
+
+                try {
+                    String ansStr = future.get(remainingTime, TimeUnit.MILLISECONDS); // dynamic timeout
+                    int ans = Integer.parseInt(ansStr);
+
+                    if (ans < 1 || ans > q.options.length) {
+                        System.out.println("⚠ Out of range! Please enter between 1 and " + q.options.length + ".");
+                        continue; // ask again without skipping
+                    }
+
+                    if (ans == q.correctAnswer) {
+                        System.out.println("✅ Correct!\n");
+                        score++;
+                    } else {
+                        System.out.println("❌ Wrong! Correct answer was: " + q.correctAnswer + "\n");
+                    }
+                    answered = true;
+
+                } catch (TimeoutException e) {
+                    System.out.println("\n⏳ Time up! Skipping to next question...\n");
+                    future.cancel(true);
+                    break;
+                } catch (NumberFormatException e) {
+                    System.out.println("⚠ Invalid input! Please enter a number.");
+                } catch (Exception e) {
+                    System.out.println("⚠ Error! Skipping...\n");
+                    break;
+                }
+            }
+
+            if (!answered && (System.currentTimeMillis() - startTime) >= 10000) {
+                System.out.println("⏳ Time expired! Moving to next question...\n");
             }
         }
 
-        System.out.println("\n===== Quiz Completed =====");
-        System.out.println("Name: " + name);
-        System.out.println("Your Score: " + score + "/" + questions.size());
-
-        if (score > 20) System.out.println("🏆 Excellent Performance!");
-        else if (score > 15) System.out.println("🎯 Good Job!");
-        else System.out.println("📚 Keep Practicing!");
+        executor.shutdown();
+        System.out.println("===== Quiz Finished! =====");
+        System.out.println(name + ", your final score: " + score + "/" + questions.size());
     }
 
     public static List<Question> getQuestions() {
