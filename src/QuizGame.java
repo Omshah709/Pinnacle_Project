@@ -37,19 +37,19 @@ public class QuizGame {
             long startTime = System.currentTimeMillis();
             boolean answered = false;
 
-            while (!answered && (System.currentTimeMillis() - startTime) < 10000) { // 10s window
+            while (!answered && (System.currentTimeMillis() - startTime) < 10000) { 
                 long remainingTime = 10000 - (System.currentTimeMillis() - startTime);
                 System.out.print("Your answer (1-" + q.options.length + ") [" + (remainingTime / 1000) + "s left]: ");
 
                 Future<String> future = executor.submit(() -> sc.nextLine());
 
                 try {
-                    String ansStr = future.get(remainingTime, TimeUnit.MILLISECONDS); // dynamic timeout
+                    String ansStr = future.get(remainingTime, TimeUnit.MILLISECONDS);
                     int ans = Integer.parseInt(ansStr);
 
                     if (ans < 1 || ans > q.options.length) {
                         System.out.println("⚠ Out of range! Please enter between 1 and " + q.options.length + ".");
-                        continue; // ask again without skipping
+                        continue; 
                     }
 
                     if (ans == q.correctAnswer) {
@@ -105,7 +105,7 @@ public class QuizGame {
         qList.add(new Question("Which exception is thrown when dividing by zero?",
                 new String[]{"ArithmeticException", "NullPointerException", "IOException", "IllegalArgumentException"}, 1));
 
-        // Add more questions to make it 25
+       
         qList.add(new Question("Which loop is guaranteed to execute at least once?",
                 new String[]{"for", "while", "do-while", "foreach"}, 3));
         qList.add(new Question("Which operator is used for logical AND?",
